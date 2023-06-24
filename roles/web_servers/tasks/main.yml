@@ -1,33 +1,33 @@
 - name: install apache and php for Ubuntu and CentOS
+  tags: apache,httpd,php
   package:
     name:
-      - "{{apache_package}}"
-      - "{{php_package}}"
+      - "{{ apache_package_name }}"
+      - "{{ php_package_name }}"
     state: latest
 
-- name: start httpd (CentOS)
-  tags: apache, centos, httpd
+- name: start and enable apache service
+  tags: apache,httpd
   service:
-    name: httpd
+    name: "{{ apache_service }}"
     state: started
     enabled: yes
-  when: ansible_distribution == 'CentOS'
 
-- name: change e-mail address for admin
-  tags: apache, centos, httpd
+- name: change e-mail address
+  tags: apache,centos
   lineinfile:
     path: /etc/httpd/conf/httpd.conf
     regexp: '^ServerAdmin'
     line: ServerAdmin aboludepeter@gmail.com
   when: ansible_distribution == "CentOS"
-  register: httpd
+  register: apache
 
-- name: restart httpd (CentOS)
-  tags: apache,centos,httpd
+- name: restart httpd
+  tags: apache,httpd
   service:
-    name: httpd
+    name: "{{ apache_service }}"
     state: restarted
-  when: httpd.changed
+  when: apache.changed
 
 - name: copy default html file
   tags: apache,apache2,httpd
