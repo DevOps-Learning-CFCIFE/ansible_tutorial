@@ -3,17 +3,29 @@
 - hosts: all
   become: true
   pre_tasks:
-  - name: install updates (CentOS)
+  - name: Update repo cache (CentOS)
     tags: always
     dnf:
       update_cache: yes
+    changed_when: false
     when: ansible_distribution == 'CentOS'
 
-  - name: install updates (Ubuntu)
+  - name: Update repo cache (Ubuntu)
     tags: always
     apt:
       update_cache: yes
+    changed_when: false
     when: ansible_distribution == 'Ubuntu'
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: add ssh key for simone
+    tags: always
+    authorized_key:
+      user: simone
+      key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP2M1S0LSojEpoLeIQPLY6GaSdXDEuCLCPCHqNQHDYRB ansible"
 
 - hosts: workstations
   become: true
@@ -54,9 +66,18 @@
   - name: change e-mail address for admin
     tags: apache, centos, httpd
     lineinfile:
-      path: /etc/httpd/conf/htppd.conf
+      path: /etc/httpd/conf/httpd.conf
       regexp: '^ServerAdmin'
       line: ServerAdmin aboludepeter@gmail.com
+    when: ansible_distribution == "CentOS"
+    register: httpd
+  
+  - name: restart httpd (CentOS)
+    tags: apache,centos,httpd
+    service:
+      name: httpd
+      state: restarted
+    when: httpd.changed
 
   - name: copy default html file
     tags: apache,apache2,httpd
