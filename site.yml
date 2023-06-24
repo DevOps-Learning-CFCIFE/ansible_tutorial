@@ -6,14 +6,12 @@
   - name: install updates (CentOS)
     tags: always
     dnf:
-      update_only: yes
       update_cache: yes
     when: ansible_distribution == 'CentOS'
 
   - name: install updates (Ubuntu)
     tags: always
     apt:
-      upgrade: dist
       update_cache: yes
     when: ansible_distribution == 'Ubuntu'
 
@@ -34,29 +32,32 @@
       owner: root
       group: root
 
-
 - hosts: web_servers
   become: true
   tasks:
 
-  - name: install apache and php for Ubuntu
-    tags: apache,apache2,ubuntu
-    apt:
+  - name: install apache and php for Ubuntu and CentOS
+    package:
       name:
-        - apache2
-        - libapache2-mod-php
+        - "{{apache_package}}"
+        - "{{php_package}}"
       state: latest
-    when: ansible_distribution == 'Ubuntu'
-  
-  - name: install apache and php for CentOS
-    tags: apache,centos,httpd
-    dnf:
-      name:
-        - httpd
-        - php
-      state: latest
+
+  - name: start httpd (CentOS)
+    tags: apache, centos, httpd
+    service:
+      name: httpd
+      state: started
+      enabled: yes
     when: ansible_distribution == 'CentOS'
   
+  - name: change e-mail address for admin
+    tags: apache, centos, httpd
+    lineinfile:
+      path: /etc/httpd/conf/htppd.conf
+      regexp: '^ServerAdmin'
+      line: ServerAdmin aboludepeter@gmail.com
+
   - name: copy default html file
     tags: apache,apache2,httpd
     copy:
